@@ -7,10 +7,20 @@ package Mediabiblioteket.code;
 
 import java.awt.AWTException;
 import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.EventQueue;
+import java.awt.Frame;
 import java.awt.Robot;
+import java.awt.Window;
 import static java.awt.event.KeyEvent.VK_ENTER;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -18,18 +28,82 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import static javax.swing.JOptionPane.showMessageDialog;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
+import test_project.DefaultOptionPane;
 import test_project.MockOptionPane;
+import static test_project.Test_Project.getButton;
+import static test_project.Test_Project.waitForDialog;
 
 /**
  *
  * @author Simonster
  */
 public class LibraryControllerTest {
+// https://stackoverflow.com/questions/22417113/how-to-auto-click-ok-on-joptionpane-when-testing
+    public static JDialog waitForDialog(String title) {
 
+        JDialog win = null;
+        do {
+            for (Window window : Frame.getWindows()) {
+                if (window instanceof JDialog) {
+                    JDialog dialog = (JDialog) window;
+                   // System.out.println(dialog.getTitle());
+                    if (title.equals(dialog.getTitle())) {
+                        win = dialog;
+                        break;
+                    }
+                }
+            }
+
+            if (win == null) {
+                try {
+                    Thread.sleep(250);
+                } catch (InterruptedException ex) {
+                    break;
+                }
+            }
+
+        } while (win == null);
+
+        return win;
+
+    }
+
+    public static JButton getButton(Container container, String text) {
+        JButton btn = null;
+        List<Container> children = new ArrayList<>(25);
+        for (Component child : container.getComponents()) {
+        //    System.out.println(child);
+            if (child instanceof JButton) {
+                JButton button = (JButton) child;
+                if (text.equals(button.getText())) {
+                    btn = button;
+                    break;
+                }
+            } else if (child instanceof Container) {
+                children.add((Container) child);
+            }
+        }
+        if (btn == null) {
+            for (Container cont : children) {
+                JButton button = getButton(cont, text);
+                if (button != null) {
+                    btn = button;
+                    break;
+                }
+            }
+        }
+        return btn;
+    }
+// end of copied
     public static final String ANSI_GREEN = "\u001B[32m";
     public static final String ANSI_CYAN = "\u001B[36m";
     public static final String ANSI_RED = "\u001B[31m";
     public static final String ANSI_RESET = "\u001B[0m";
+    
+    
 
     public LibraryControllerTest() {
     }
@@ -175,18 +249,18 @@ public class LibraryControllerTest {
         System.out.println("testCheckInputOnlyDigits_validInput");
         String inputString = "1234";
         LibraryController instance = new LibraryController();
+        instance.setOptionPane(new MockOptionPane());
         boolean expResult = true;
         boolean result = instance.checkInputOnlyDigits(inputString);
         assertEquals(expResult, result);
 
     }
 
-    @Test
-    public void testCheckInputOnlyDigits_nonNumberInput() throws AWTException {
+    public void testCheckInputOnlyDigits_nonNumberInput() {
         System.out.println("testCheckInputOnlyDigits_nonrealNumberInput");
         //testdata 
         // any non word character except -,_,. and blankspace should return a false value for the test to pass.
-        String teststring[] = {"1asd", "sdf1", "!?", "12.34", "12,45"};
+        String teststring[] = {"aaa", "2asd", "sdf4", "!?", "12.34", "12,45"};
 
         LibraryController instance = new LibraryController();
         instance.setOptionPane(new MockOptionPane());
@@ -196,7 +270,6 @@ public class LibraryControllerTest {
 
         for (int i = 0; i < teststring.length; i++) {
 
-            
             Result[i] = instance.checkInputOnlyDigits(teststring[i]);
 
             expResult[i] = false;
@@ -212,6 +285,57 @@ public class LibraryControllerTest {
                     System.out.println("Testdata: " + ANSI_CYAN + teststring[i] + ANSI_RESET + " Result: " + ANSI_GREEN + Result[i] + ANSI_RESET + " Expected: " + ANSI_GREEN + expResult[i] + ANSI_RESET);
                 }
 
+            }
+        }
+
+        assertArrayEquals(Result, expResult);
+    }
+
+    @Test
+    public void testCheckInputOnlyDigits_autoClick() {
+        System.out.println("testCheckInputOnlyDigits_autoClick");
+        //testdata 
+        // any non word character except -,_,. and blankspace should return a false value for the test to pass.
+        String teststring[] = {"aaa","sdfsdf"};
+
+        LibraryController instance = new LibraryController();
+        instance.setOptionPane(new DefaultOptionPane());
+
+        boolean expResult[] = new boolean[teststring.length];
+        boolean Result[] = new boolean[teststring.length];
+
+        String msg = "";
+
+        // Code copied from slack
+        EventQueue.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+
+                for (int i = 0; i < teststring.length; i++) {
+
+                    Result[i] = instance.checkInputOnlyDigits(teststring[i]);
+
+                    expResult[i] = false;
+
+                }
+
+            }
+        });
+
+        JDialog frame = waitForDialog("Error");
+      //  System.out.println("Found window " + frame);
+        if (frame != null) {
+            final JButton btn = getButton(frame, "OK");
+            System.out.println("Found button " + btn);
+            if (btn != null) {
+                SwingUtilities.invokeLater(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        System.out.println("Click");
+                        btn.doClick();
+                    }
+                });
             }
         }
 
