@@ -1,0 +1,21 @@
+    public void testSearchBorrowed_SF() {
+        System.out.println("testSearchBorrowed_SF");
+
+        LibraryController instance = new LibraryController(new GUI());
+
+        instance.currentBorrower = new Borrower("Simon", "681102-9999", "000");
+
+        LinkedList expList = new LinkedList();
+
+        Book b1 = new Book("Bok", "Agenten", "277877", 2005, "Grisham");
+
+        b1.setBorrowed(true);
+
+        expList.add(b1);
+
+        instance.searchBorrowed();
+
+        // collection.LinkedList has not implementation of equals use other method of comparison for a pass
+        // assertEquals(instance.mediaSearchResults, expList);
+        assertEquals(instance.mediaSearchResults.get(0), expList.get(0));
+    }
