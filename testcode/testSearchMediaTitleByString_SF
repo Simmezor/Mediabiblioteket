@@ -1,0 +1,23 @@
+    @Test
+    public void testSearchMediaTitleByString_SF() {
+        System.out.println("testSearchMediaTitleByString_SF");
+
+        LibraryController instance = new LibraryController(new GUI());
+
+        LinkedList expList = new LinkedList();
+
+        Book b1 = new Book("Bok", "Agenten", "277877", 2005, "Grisham");
+
+       
+        b1.setBorrowed(true);
+        expList.add(b1);
+
+        instance.searchMediaTitleByString("Agenten");
+
+        System.out.println(instance.mediaSearchResults);
+       
+      // collection.LinkedList has not implementation of equals use other method of comparison for a pass
+     // assertEquals(instance.mediaSearchResults, expList);
+
+      assertEquals(instance.mediaSearchResults.get(0), expList.get(0));
+    }
